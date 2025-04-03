@@ -1,23 +1,5 @@
 const fetch = require('isomorphic-fetch');
 const { ActivityError } = require('../shared/errors');
-const MicrosoftGraph = require("@microsoft/microsoft-graph-client");
-const { ClientSecretCredential } = require("@azure/identity");
-
-const credential = new ClientSecretCredential(
-    process.env.TENANT_ID,
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET
-);
-
-const client = MicrosoftGraph.Client.initWithMiddleware({
-    authProvider: {
-        getAccessToken: async () => {
-            const token = await credential.getToken("https://graph.microsoft.com/.default");
-            return token.token;
-        }
-    }
-});
-
 
 module.exports = async function (context, message) {
     try {
@@ -50,26 +32,23 @@ module.exports = async function (context, message) {
 
             const status = await response.json();
             context.log('[monitor-copy-status] Status check:', {
-                ...status,
+                status: status.status,
+                percentageComplete: status.percentageComplete,
                 retryCount
             });
 
             if (status.status === 'completed') {
-                // get driveItem webUrl
-                const driveItem = await client.api(`/users/${process.env.DRIVE_USER_ID}/drive/items/${status.resourceId}`).get();
                 const body = {
                     gradebook_id: status.resourceId,
                     class_id: message.classId,
-                    folder_id: message.folderId,
-                    gradebook_url: driveItem.webUrl
+                    folder_id: message.folderId
                 }
                 context.log('[monitor-copy-status] Copy completed successfully:', status.resourceId);
                 context.log('[monitor-copy-status] Updating class...', body);
                 const response = await fetch(process.env.TIGER_GRADES_BASE_URL + '/wp-json/tiger-grades/v1/update-class', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + Buffer.from(process.env.TIGER_GRADES_WEB_APP_USER + ':' + process.env.TIGER_GRADES_WEB_APP_PASSWORD).toString('base64')
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 });
