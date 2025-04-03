@@ -1,0 +1,3 @@
+kind: Added
+body: monitor copy status service bus trigger for polling a monitoringUrl from a microsoft graph copy request
+time: 2025-04-03T13:53:53.556485+08:00
