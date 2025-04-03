@@ -2,5 +2,14 @@
     "name": "tiger-functions",
     "version": "1.0.0",
     "private": true,
-    "dependencies": {}
+    "dependencies": {
+        "@azure/functions": "^4.7.0",
+        "@azure/identity": "^4.0.0",
+        "@microsoft/microsoft-graph-client": "^3.0.7",
+        "durable-functions": "^2.1.0",
+        "isomorphic-fetch": "^3.0.0"
+    },
+    "devDependencies": {
+        "azure-functions-core-tools": "^4.0.5455"
+    }
 }
