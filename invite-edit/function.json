@@ -2,16 +2,11 @@
     "scriptFile": "index.js",
     "bindings": [
         {
-            "authLevel": "function",
-            "type": "httpTrigger",
+            "name": "message",
+            "type": "serviceBusTrigger",
             "direction": "in",
-            "name": "req",
-            "methods": ["post"]
-        },
-        {
-            "type": "http",
-            "direction": "out",
-            "name": "$return"
+            "queueName": "invite-teacher",
+            "connection": "ServiceBus"
         }
     ]
 }
