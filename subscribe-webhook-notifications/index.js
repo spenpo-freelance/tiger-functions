@@ -1,44 +1,70 @@
+const MicrosoftGraph = require("@microsoft/microsoft-graph-client");
 const { ClientSecretCredential } = require("@azure/identity");
-const { DefaultAzureCredential } = require("@azure/identity");
+const { ActivityError } = require('../shared/errors');
 
-const credential = new DefaultAzureCredential();
+const credential = new ClientSecretCredential(
+    process.env.TENANT_ID,
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET
+);
 
 const client = MicrosoftGraph.Client.initWithMiddleware({
-    authProvider: credential,
-    scopes: ["https://graph.microsoft.com/.default"],
+    authProvider: {
+        getAccessToken: async () => {
+            const token = await credential.getToken("https://graph.microsoft.com/.default");
+            return token.token;
+        }
+    }
 });
 
-module.exports = async function (context, req) {
-    context.log("JavaScript HTTP trigger function processed a request.");
-
-    const { name } = req.body;
-
-    if (!name) {
-        context.res = {
-            status: 400,
-            body: "Please pass a name on the query string or in the request body"
-        };
-        return;
-    }
-
+module.exports = async function (context, input) {
     try {
-        const subscription = await client.api("/subscriptions").post({
-            changeType: "created",
-            notificationUrl: "https://tiger-functions.azurewebsites.net/api/webhook-notifications",
-            resource: `/me/drive/root/children/${name}`,
-            clientState: "test",
-            latestSupportedTlsVersion: "v1_2"
+        context.log('[subscribe-webhook] Starting with input:', JSON.stringify(input));
+
+        // Input validation
+        if (!input?.folderId || !input?.userId) {
+            throw new ActivityError(
+                'INVALID_INPUT',
+                'Both folderId and userId are required',
+                { providedInput: input }
+            );
+        }
+
+        context.log('[subscribe-webhook] Validating input values:', {
+            folderId: input.folderId,
+            userId: input.userId,
+            userIdType: typeof input.userId
         });
 
-        context.res = {
-            status: 200,
-            body: subscription
-        };
+        const subscription = await client.api("/subscriptions").post({
+            changeType: "updated",
+            notificationUrl: `${process.env.FUNCTION_APP_BASE_URL}/api/update-class-webhook`,
+            resource: "/drive/root",
+            clientState: String(input.userId),
+            latestSupportedTlsVersion: "v1_2",
+            expirationDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            notificationContentType: "application/json"
+        });
+
+        context.log('[subscribe-webhook] Subscription created successfully:', subscription.id);
+        return subscription;
+
     } catch (error) {
-        context.error(error);
-        context.res = {
-            status: 500,
-            body: "Error subscribing to webhook notifications"
-        };
+        context.log.error('[subscribe-webhook] Failed:', {
+            error: error instanceof ActivityError ? error : {
+                code: 'UNEXPECTED_ERROR',
+                message: error.message,
+                stack: error.stack
+            },
+            input: input,
+            timestamp: new Date().toISOString()
+        });
+
+        if (error instanceof ActivityError) throw error;
+        throw new ActivityError(
+            'UNEXPECTED_ERROR',
+            'An unexpected error occurred while creating subscription',
+            { originalError: error.message }
+        );
     }
-}
+};
