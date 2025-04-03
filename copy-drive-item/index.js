@@ -7,6 +7,15 @@ const credential = new ClientSecretCredential(
     process.env.CLIENT_SECRET
 );
 
+const client = MicrosoftGraph.Client.initWithMiddleware({
+    authProvider: {
+        getAccessToken: async () => {
+            const token = await credential.getToken("https://graph.microsoft.com/.default");
+            return token.token;
+        }
+    }
+});
+
 module.exports = async function (context, input) {
     try {
         context.log('[copy-drive-item] Starting with input:', JSON.stringify(input));

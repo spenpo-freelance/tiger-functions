@@ -5,8 +5,8 @@
             "name": "message",
             "type": "serviceBusTrigger",
             "direction": "in",
-            "queueName": "invite-edit",
-            "connection": "ServiceBusConnection"
+            "queueName": "invite-teacher",
+            "connection": "ServiceBus"
         }
     ]
 }
