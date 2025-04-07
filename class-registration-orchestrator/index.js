@@ -32,8 +32,10 @@ const orchestrator = df.orchestrator(function* (context) {
 
         const { teacher_name, gradebook_name, email, class_id, folder_id } = bindingInput;
 
+        const newTeacher = !folder_id;
+
         // Step 1: Create folder
-        if (!folder_id) {
+        if (newTeacher) {
             try {
                 context.log('[orchestrator] Creating folder...');
                 const folderResult = yield context.df.callActivity('create-folder', { name: teacher_name });
@@ -68,15 +70,17 @@ const orchestrator = df.orchestrator(function* (context) {
         }
 
         // Step 3: Queue teacher invite
-        try {
-            context.log('[orchestrator] Queueing teacher invite...');
-            context.bindings.inviteTeacher = {
+        if (newTeacher) {
+            try {
+                context.log('[orchestrator] Queueing teacher invite...');
+                context.bindings.inviteTeacher = {
                 folderId: result.data.folderId || folder_id,
-                email: email
+                email
             };
             context.log('[orchestrator] Teacher invite queued');
-        } catch (error) {
-            throw new OrchestrationError('QUEUE_INVITE_FAILED', error.message, error);
+            } catch (error) {
+                throw new OrchestrationError('QUEUE_INVITE_FAILED', error.message, error);
+            }
         }
 
         result.status = 'completed';
