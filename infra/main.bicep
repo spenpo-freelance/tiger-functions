@@ -1,38 +1,19 @@
+param environment string = 'release' // Allowed values: 'release', 'staging', 'prod'
 param location string = 'eastasia'
-param environment string = '' // supported values: 'release', 'staging', 'production'
-@secure()
-param tgafClientSecret string = ''
-@secure()
-param tgafClientId string = ''
-@secure()
-param tgafTokenAudience string = ''
-@secure()
-param tgwaClientId string = ''
-@secure()
-param tgwaBaseUrl string = ''
-@secure()
-param tgwaUser string = ''
-@secure()
-param tgwaPassword string = ''
-@secure()
-param driveUserId string = ''
-@secure()
-param teachersDirItemId string = ''
-@secure()
-param gradebookTemplateItemId string = ''
 
-var workspace_name = 'tigergrades-${environment}'
-var sites_tigergrades_name = 'tigergrades-${environment}'
-var sites_tigergrades_domain = environment == 'production' ? 'az.tigergrades.com' : '${environment}.az.tigergrades.com'
-var components_tigergrades_name = 'tigergrades-${environment}'
-var namespaces_tiger_grades_bus_name = 'tiger-grades-bus-${environment}'
-var serverfarms_ASP_tigergradesgroup_98ad_name = 'ASP-tigergradesgroup-98ad-${environment}'
-var storageAccounts_tigergradesgroup_name = environment == 'production' ? 'tigergrades' : 'tigergrades${environment}'
-var schedulers_tiger_grades_scheduler_name = 'tiger-grades-scheduler-${environment}'
-var actionGroups_Application_Insights_Smart_Detection_name = 'Application Insights Smart Detection ${environment}'
-var userAssignedIdentities_tigergrades_id_8bcc_name = 'tigergrades-id-8bcc-${environment}'
-var github_branch = environment == 'production' ? 'main' : environment
-var app_package_container = environment == 'production' ? 'app-package-tigergrades-0299027' : 'app-package-tigergrades-${environment}-0299027'
+// Resource name suffixes based on environment
+var resourceSuffix = environment == 'prod' ? '' : '-${environment}'
+
+// Resource names with environment suffix
+var workspace_name = 'tigergrades${resourceSuffix}'
+var sites_tigergrades_name = 'tigergrades${resourceSuffix}'
+var components_tigergrades_name = 'tigergrades${resourceSuffix}'
+var namespaces_tiger_grades_bus_name = 'tiger-grades-bus${resourceSuffix}'
+var serverfarms_ASP_tigergradesgroup_98ad_name = 'ASP-tigergradesgroup-98ad${resourceSuffix}'
+var storageAccounts_tigergradesgroup_name = 'tigergrades${replace(resourceSuffix, '-', '')}'
+var schedulers_tiger_grades_scheduler_name = 'tiger-grades-scheduler${resourceSuffix}'
+var actionGroups_Application_Insights_Smart_Detection_name = 'Application Insights Smart Detection${resourceSuffix}'
+var userAssignedIdentities_tigergrades_id_8bcc_name = 'tigergrades-id-8bcc${resourceSuffix}'
 
 resource workspace_resource 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: workspace_name
@@ -135,6 +116,7 @@ resource storageAccounts_tigergradesgroup_name_resource 'Microsoft.Storage/stora
   location: location
   sku: {
     name: 'Standard_ZRS'
+    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -476,7 +458,7 @@ resource userAssignedIdentities_tigergrades_id_8bcc_name_spenpo_freelance_tiger_
   name: 'spenpo-freelance-tiger-functions-a318'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    subject: 'repo:spenpo-freelance/tiger-functions:ref:refs/heads/${github_branch}'
+    subject: 'repo:spenpo-freelance/tiger-functions:ref:refs/heads/main'
     audiences: [
       'api://AzureADTokenExchange'
     ]
@@ -507,9 +489,55 @@ resource namespaces_tiger_grades_bus_name_default 'Microsoft.ServiceBus/namespac
   }
 }
 
+resource namespaces_tiger_grades_bus_name_invite_teacher 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
+  parent: namespaces_tiger_grades_bus_name_resource
+  name: 'invite-teacher'
+  properties: {
+    maxMessageSizeInKilobytes: 256
+    lockDuration: 'PT1M'
+    maxSizeInMegabytes: 1024
+    requiresDuplicateDetection: false
+    requiresSession: false
+    defaultMessageTimeToLive: 'P14D'
+    deadLetteringOnMessageExpiration: true
+    enableBatchedOperations: true
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 10
+    status: 'Active'
+    autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
+    enablePartitioning: false
+    enableExpress: false
+  }
+}
+
+resource namespaces_tiger_grades_bus_name_monitor_copy_status 'Microsoft.ServiceBus/namespaces/queues@2024-01-01' = {
+  parent: namespaces_tiger_grades_bus_name_resource
+  name: 'monitor-copy-status'
+  properties: {
+    maxMessageSizeInKilobytes: 256
+    lockDuration: 'PT1M'
+    maxSizeInMegabytes: 1024
+    requiresDuplicateDetection: false
+    requiresSession: false
+    defaultMessageTimeToLive: 'P14D'
+    deadLetteringOnMessageExpiration: true
+    enableBatchedOperations: true
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 10
+    status: 'Active'
+    autoDeleteOnIdle: 'P10675199DT2H48M5.4775807S'
+    enablePartitioning: false
+    enableExpress: false
+  }
+}
+
 resource storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_resource
   name: 'default'
+  sku: {
+    name: 'Standard_ZRS'
+    tier: 'Standard'
+  }
   properties: {
     cors: {
       corsRules: []
@@ -524,6 +552,10 @@ resource storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storag
 resource Microsoft_Storage_storageAccounts_fileServices_storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storageAccounts/fileServices@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_resource
   name: 'default'
+  sku: {
+    name: 'Standard_ZRS'
+    tier: 'Standard'
+  }
   properties: {
     protocolSettings: {
       smb: {}
@@ -597,6 +629,7 @@ resource sites_tigergrades_name_web 'Microsoft.Web/sites/config@2024-04-01' = {
     logsDirectorySizeLimit: 35
     detailedErrorLoggingEnabled: false
     publishingUsername: '$tigergrades'
+    scmType: 'GitHubAction'
     use32BitWorkerProcess: false
     webSocketsEnabled: false
     alwaysOn: false
@@ -655,9 +688,145 @@ resource sites_tigergrades_name_web 'Microsoft.Web/sites/config@2024-04-01' = {
   }
 }
 
-resource sites_tigergrades_name_hostNameBinding 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
+resource sites_tigergrades_name_copy_drive_item 'Microsoft.Web/sites/functions@2024-04-01' = {
   parent: sites_tigergrades_name_resource
-  name: sites_tigergrades_domain
+  name: 'copy-drive-item'
+  properties: {
+    script_root_path_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/copy-drive-item/'
+    script_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/copy-drive-item/index.js'
+    config_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/copy-drive-item/function.json'
+    test_data_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/tmp/FunctionsData/copy-drive-item.dat'
+    href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/functions/copy-drive-item'
+    config: {
+      scriptFile: 'index.js'
+      bindings: [
+        {
+          authLevel: 'function'
+          type: 'httpTrigger'
+          direction: 'in'
+          name: 'req'
+          methods: [
+            'post'
+          ]
+        }
+        {
+          type: 'http'
+          direction: 'out'
+          name: '$return'
+        }
+      ]
+    }
+    invoke_url_template: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/api/copy-drive-item'
+    language: 'node'
+    isDisabled: false
+  }
+}
+
+resource sites_tigergrades_name_create_folder 'Microsoft.Web/sites/functions@2024-04-01' = {
+  parent: sites_tigergrades_name_resource
+  name: 'create-folder'
+  properties: {
+    script_root_path_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/create-folder/'
+    script_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/create-folder/index.js'
+    config_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/create-folder/function.json'
+    test_data_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/tmp/FunctionsData/create-folder.dat'
+    href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/functions/create-folder'
+    config: {
+      scriptFile: 'index.js'
+      bindings: [
+        {
+          authLevel: 'function'
+          type: 'httpTrigger'
+          direction: 'in'
+          name: 'req'
+          methods: [
+            'post'
+          ]
+        }
+        {
+          type: 'http'
+          direction: 'out'
+          name: '$return'
+        }
+      ]
+    }
+    invoke_url_template: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/api/create-folder'
+    language: 'node'
+    isDisabled: false
+  }
+}
+
+resource sites_tigergrades_name_invite_edit 'Microsoft.Web/sites/functions@2024-04-01' = {
+  parent: sites_tigergrades_name_resource
+  name: 'invite-edit'
+  properties: {
+    script_root_path_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/invite-edit/'
+    script_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/invite-edit/index.js'
+    config_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/invite-edit/function.json'
+    test_data_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/tmp/FunctionsData/invite-edit.dat'
+    href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/functions/invite-edit'
+    config: {
+      scriptFile: 'index.js'
+      bindings: [
+        {
+          authLevel: 'function'
+          type: 'httpTrigger'
+          direction: 'in'
+          name: 'req'
+          methods: [
+            'post'
+          ]
+        }
+        {
+          type: 'http'
+          direction: 'out'
+          name: '$return'
+        }
+      ]
+    }
+    invoke_url_template: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/api/invite-edit'
+    language: 'node'
+    isDisabled: false
+  }
+}
+
+resource sites_tigergrades_name_subscribe_webhook_notifications 'Microsoft.Web/sites/functions@2024-04-01' = {
+  parent: sites_tigergrades_name_resource
+  name: 'subscribe-webhook-notifications'
+  properties: {
+    script_root_path_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/subscribe-webhook-notifications/'
+    script_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/subscribe-webhook-notifications/index.js'
+    config_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/home/site/wwwroot/subscribe-webhook-notifications/function.json'
+    test_data_href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/vfs/tmp/FunctionsData/subscribe-webhook-notifications.dat'
+    href: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/admin/functions/subscribe-webhook-notifications'
+    config: {
+      scriptFile: 'index.js'
+      bindings: [
+        {
+          authLevel: 'function'
+          type: 'httpTrigger'
+          direction: 'in'
+          name: 'req'
+          methods: [
+            'post'
+          ]
+        }
+        {
+          type: 'http'
+          direction: 'out'
+          name: '$return'
+        }
+      ]
+    }
+    invoke_url_template: 'https://tigergrades-erbmcedccbgrfybr.eastasia-01.azurewebsites.net/api/subscribe-webhook-notifications'
+    language: 'node'
+    isDisabled: false
+  }
+}
+
+resource sites_tigergrades_name_sites_tigergrades_name_erbmcedccbgrfybr_eastasia_01_azurewebsites_net 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
+  parent: sites_tigergrades_name_resource
+  name: '${sites_tigergrades_name}.azurewebsites.net'
   properties: {
     siteName: sites_tigergrades_name
     hostNameType: 'Verified'
@@ -666,7 +835,7 @@ resource sites_tigergrades_name_hostNameBinding 'Microsoft.Web/sites/hostNameBin
 
 resource storageAccounts_tigergradesgroup_name_default_app_package_tigergrades_0299027 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_default
-  name: app_package_container
+  name: 'app-package-tigergrades-0299027'
   properties: {
     immutableStorageWithVersioning: {
       enabled: false
@@ -719,22 +888,20 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
   }
   kind: 'functionapp,linux'
   identity: {
-    type: 'SystemAssigned, UserAssigned'
-    userAssignedIdentities: {
-      '${userAssignedIdentities_tigergrades_id_8bcc_name_resource.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     enabled: true
     hostNameSslStates: [
       {
-        name: sites_tigergrades_name
+        name: '${sites_tigergrades_name}.azurewebsites.net'
         sslState: 'Disabled'
         hostType: 'Standard'
-      }, {
-        name: sites_tigergrades_domain
+      }
+      {
+        name: '${sites_tigergrades_name}.scm.azurewebsites.net'
         sslState: 'Disabled'
-        hostType: 'Standard'
+        hostType: 'Repository'
       }
     ]
     serverFarmId: serverfarms_ASP_tigergradesgroup_98ad_name_resource.id
@@ -753,48 +920,12 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
       minimumElasticInstanceCount: 0
       appSettings: [
         {
-          name: 'DRIVE_USER_ID'
-          value: driveUserId
-        }
-        {
-          name: 'TEACHERS_DIR_ITEM_ID'
-          value: teachersDirItemId
-        }
-        {
-          name: 'GRADEBOOK_TEMPLATE_ITEM_ID'
-          value: gradebookTemplateItemId
-        }
-        {
-          name: 'TIGER_GRADES_BASE_URL'
-          value: tgwaBaseUrl
-        }
-        {
-          name: 'TIGER_GRADES_WEB_APP_USER'
-          value: tgwaUser
-        }
-        {
-          name: 'TIGER_GRADES_WEB_APP_PASSWORD'
-          value: tgwaPassword
-        }
-        {
-          name: 'TENANT_ID'
-          value: tenant().tenantId
-        }
-        {
-          name: 'CLIENT_ID'
-          value: tgafClientId
-        }
-        {
-          name: 'CLIENT_SECRET'
-          value: tgafClientSecret
-        }
-        {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_tigergradesgroup_name};AccountKey=${storageAccounts_tigergradesgroup_name_resource.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
         }
         {
-          name: 'ServiceBusConnection'
-          value: listKeys('${namespaces_tiger_grades_bus_name_resource.id}/authorizationrules/RootManageSharedAccessKey', namespaces_tiger_grades_bus_name_resource.apiVersion).primaryConnectionString
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '0'
         }
       ]
     }
@@ -802,7 +933,7 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
       deployment: {
         storage: {
           type: 'blobcontainer'
-          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.${az.environment().suffixes.storage}/${app_package_container}'
+          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.core.windows.net/app-package-${sites_tigergrades_name}-0299027'
           authentication: {
             type: 'storageaccountconnectionstring'
             storageAccountConnectionStringName: 'AzureWebJobsStorage'
@@ -837,51 +968,3 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
     autoGeneratedDomainNameLabelScope: 'TenantReuse'
   }
 }
-
-resource authSettings 'Microsoft.Web/sites/config@2022-03-01' = {
-  parent: sites_tigergrades_name_resource
-  name: 'authsettingsV2'
-  properties: {
-    platform: {
-      enabled: true
-      runtimeVersion: '~1'
-    }
-    globalValidation: {
-      unauthenticatedClientAction: 'Return401'
-      requireAuthentication: true
-    }
-    identityProviders: {
-      azureActiveDirectory: {
-        registration: {
-          clientId: tgafClientId
-          clientSecretSettingName: 'CLIENT_SECRET'
-          openIdIssuer: '${az.environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
-        }
-        login: {
-          loginParameters: []
-        }
-        validation: {
-          allowedAudiences: [
-            tgafTokenAudience
-          ]
-          defaultAuthorizationPolicy: {
-            allowedApplications: [
-              tgwaClientId
-            ]
-          }
-          jwtClaimChecks: {
-            // Allow any identity; no issuer check beyond tenant above
-          }
-        }
-      }
-    }
-    login: {
-      tokenStore: {
-        enabled: true
-      }
-    }
-  }
-}
-
-// Add output variables
-output functionAppName string = sites_tigergrades_name
