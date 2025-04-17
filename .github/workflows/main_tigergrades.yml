@@ -7,8 +7,6 @@ on:
   push:
     branches:
       - main
-      - staging
-      - release
   workflow_dispatch:
 
 env:
@@ -75,7 +73,7 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: 'tigergrades-${{ github.ref }}'
-          slot-name: '${{ github.ref }}'
+          app-name: 'tigergrades'
+          slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           
