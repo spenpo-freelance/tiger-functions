@@ -923,10 +923,6 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_tigergradesgroup_name};AccountKey=${storageAccounts_tigergradesgroup_name_resource.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
         }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '0'
-        }
       ]
     }
     functionAppConfig: {
