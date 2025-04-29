@@ -68,7 +68,8 @@ module.exports = async function (context, message) {
                 const response = await fetch(process.env.TIGER_GRADES_BASE_URL + '/wp-json/tiger-grades/v1/update-class', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + Buffer.from(process.env.TIGER_GRADES_WEB_APP_USER + ':' + process.env.TIGER_GRADES_WEB_APP_PASSWORD).toString('base64')
                     },
                     body: JSON.stringify(body)
                 });
