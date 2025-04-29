@@ -1,4 +1,3 @@
-const MicrosoftGraph = require("@microsoft/microsoft-graph-client");
 const { ClientSecretCredential } = require("@azure/identity");
 const { ActivityError } = require('../shared/errors');
 
@@ -7,15 +6,6 @@ const credential = new ClientSecretCredential(
     process.env.CLIENT_ID,
     process.env.CLIENT_SECRET
 );
-
-const client = MicrosoftGraph.Client.initWithMiddleware({
-    authProvider: {
-        getAccessToken: async () => {
-            const token = await credential.getToken("https://graph.microsoft.com/.default");
-            return token.token;
-        }
-    }
-});
 
 module.exports = async function (context, input) {
     try {
