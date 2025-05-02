@@ -1,19 +1,15 @@
-param environment string = 'release' // Allowed values: 'release', 'staging', 'prod'
+param environment string = 'staging' // Allowed values: 'release', 'staging', 'prod'
 param location string = 'eastasia'
 
-// Resource name suffixes based on environment
-var resourceSuffix = environment == 'prod' ? '' : '-${environment}'
-
-// Resource names with environment suffix
-var workspace_name = 'tigergrades${resourceSuffix}'
-var sites_tigergrades_name = 'tigergrades${resourceSuffix}'
-var components_tigergrades_name = 'tigergrades${resourceSuffix}'
-var namespaces_tiger_grades_bus_name = 'tiger-grades-bus${resourceSuffix}'
-var serverfarms_ASP_tigergradesgroup_98ad_name = 'ASP-tigergradesgroup-98ad${resourceSuffix}'
-var storageAccounts_tigergradesgroup_name = 'tigergrades${replace(resourceSuffix, '-', '')}'
-var schedulers_tiger_grades_scheduler_name = 'tiger-grades-scheduler${resourceSuffix}'
-var actionGroups_Application_Insights_Smart_Detection_name = 'Application Insights Smart Detection${resourceSuffix}'
-var userAssignedIdentities_tigergrades_id_8bcc_name = 'tigergrades-id-8bcc${resourceSuffix}'
+var workspace_name = 'tigergrades-${environment}'
+var sites_tigergrades_name = '${environment}.az.tigergrades.com'
+var components_tigergrades_name = 'tigergrades-${environment}'
+var namespaces_tiger_grades_bus_name = 'tiger-grades-bus-${environment}'
+var serverfarms_ASP_tigergradesgroup_98ad_name = 'ASP-tigergradesgroup-98ad-${environment}'
+var storageAccounts_tigergradesgroup_name = 'tigergrades${environment}'
+var schedulers_tiger_grades_scheduler_name = 'tiger-grades-scheduler-${environment}'
+var actionGroups_Application_Insights_Smart_Detection_name = 'Application Insights Smart Detection ${environment}'
+var userAssignedIdentities_tigergrades_id_8bcc_name = 'tigergrades-id-8bcc-${environment}'
 
 resource workspace_resource 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: workspace_name
@@ -116,7 +112,6 @@ resource storageAccounts_tigergradesgroup_name_resource 'Microsoft.Storage/stora
   location: location
   sku: {
     name: 'Standard_ZRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -534,10 +529,6 @@ resource namespaces_tiger_grades_bus_name_monitor_copy_status 'Microsoft.Service
 resource storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_resource
   name: 'default'
-  sku: {
-    name: 'Standard_ZRS'
-    tier: 'Standard'
-  }
   properties: {
     cors: {
       corsRules: []
@@ -552,10 +543,6 @@ resource storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storag
 resource Microsoft_Storage_storageAccounts_fileServices_storageAccounts_tigergradesgroup_name_default 'Microsoft.Storage/storageAccounts/fileServices@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_resource
   name: 'default'
-  sku: {
-    name: 'Standard_ZRS'
-    tier: 'Standard'
-  }
   properties: {
     protocolSettings: {
       smb: {}
@@ -824,9 +811,9 @@ resource sites_tigergrades_name_subscribe_webhook_notifications 'Microsoft.Web/s
   }
 }
 
-resource sites_tigergrades_name_sites_tigergrades_name_erbmcedccbgrfybr_eastasia_01_azurewebsites_net 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
+resource sites_tigergrades_name_hostNameBinding 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
   parent: sites_tigergrades_name_resource
-  name: '${sites_tigergrades_name}.azurewebsites.net'
+  name: sites_tigergrades_name
   properties: {
     siteName: sites_tigergrades_name
     hostNameType: 'Verified'
@@ -894,14 +881,9 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
     enabled: true
     hostNameSslStates: [
       {
-        name: '${sites_tigergrades_name}.azurewebsites.net'
+        name: sites_tigergrades_name
         sslState: 'Disabled'
         hostType: 'Standard'
-      }
-      {
-        name: '${sites_tigergrades_name}.scm.azurewebsites.net'
-        sslState: 'Disabled'
-        hostType: 'Repository'
       }
     ]
     serverFarmId: serverfarms_ASP_tigergradesgroup_98ad_name_resource.id
@@ -929,7 +911,7 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
       deployment: {
         storage: {
           type: 'blobcontainer'
-          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.core.windows.net/app-package-${sites_tigergrades_name}-0299027'
+          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.core.windows.net/app-package-tigergrades-${environment}-0299027'
           authentication: {
             type: 'storageaccountconnectionstring'
             storageAccountConnectionStringName: 'AzureWebJobsStorage'
