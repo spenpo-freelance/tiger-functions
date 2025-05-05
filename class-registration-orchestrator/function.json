@@ -9,15 +9,15 @@
             "name": "inviteTeacher",
             "type": "serviceBus",
             "direction": "out",
-            "queueName": "invite-teacher",
-            "connection": "ServiceBus"
+            "queueName": "invite-edit",
+            "connection": "ServiceBusConnection"
         },
         {
             "name": "monitorCopyStatus",
             "type": "serviceBus",
             "direction": "out",
             "queueName": "monitor-copy-status",
-            "connection": "ServiceBus"
+            "connection": "ServiceBusConnection"
         }
     ]
 }
