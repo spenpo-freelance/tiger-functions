@@ -595,7 +595,6 @@ resource sites_tigergrades_name_web 'Microsoft.Web/sites/config@2024-04-01' = {
     logsDirectorySizeLimit: 35
     detailedErrorLoggingEnabled: false
     publishingUsername: '$tigergrades'
-    scmType: 'GitHubAction'
     use32BitWorkerProcess: false
     webSocketsEnabled: false
     alwaysOn: false
@@ -801,7 +800,7 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
       deployment: {
         storage: {
           type: 'blobcontainer'
-          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.core.windows.net/app-package-tigergrades-${environment}-0299027'
+          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.${az.environment().suffixes.storage}/app-package-tigergrades-${environment}-0299027'
           authentication: {
             type: 'storageaccountconnectionstring'
             storageAccountConnectionStringName: 'AzureWebJobsStorage'
@@ -837,26 +836,6 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
   }
 }
 
-// Add GitHub source control configuration
-resource sites_tigergrades_name_sourcecontrols 'Microsoft.Web/sites/sourcecontrols@2024-04-01' = {
-  parent: sites_tigergrades_name_resource
-  name: 'web'
-  properties: {
-    repoUrl: 'https://github.com/spenpo-freelance/tiger-functions'
-    branch: environment
-    isManualIntegration: false
-    isGitHubAction: true
-    gitHubActionConfiguration: {
-      generateWorkflowFile: true
-      isLinux: true
-      codeConfiguration: {
-        runtimeStack: 'node'
-        runtimeVersion: '20'
-      }
-    }
-  }
-}
-
 resource authSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   parent: sites_tigergrades_name_resource
   name: 'authsettingsV2'
@@ -874,7 +853,7 @@ resource authSettings 'Microsoft.Web/sites/config@2022-03-01' = {
         registration: {
           clientId: tgafClientId
           clientSecretSettingName: 'CLIENT_SECRET'
-          openIdIssuer: 'https://login.microsoftonline.com/${tenant().tenantId}/v2.0'
+          openIdIssuer: '${az.environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
         }
         login: {
           loginParameters: []
@@ -901,3 +880,6 @@ resource authSettings 'Microsoft.Web/sites/config@2022-03-01' = {
     }
   }
 }
+
+// Add output variables
+output functionAppName string = sites_tigergrades_name
