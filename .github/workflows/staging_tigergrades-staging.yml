@@ -34,6 +34,6 @@ jobs:
       with:
         app-name: tigergrades-staging
         slot-name: Production
-        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F83CEFDC85F34E4FBF6C29DD2AF4FEA6 }}
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_3EE5B86783F441A79C33D452C74C12C1 }}
         package: .
 
