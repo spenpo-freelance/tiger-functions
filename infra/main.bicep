@@ -1,5 +1,5 @@
-param environment string = 'statging' // Allowed values: 'release', 'staging', 'prod'
 param location string = 'eastasia'
+param environment string = '' // supported values: 'release', 'staging', 'production'
 @secure()
 param tgafClientSecret string = ''
 @secure()
@@ -23,14 +23,16 @@ param gradebookTemplateItemId string = ''
 
 var workspace_name = 'tigergrades-${environment}'
 var sites_tigergrades_name = 'tigergrades-${environment}'
-var sites_tigergrades_domain = '${environment}.az.tigergrades.com'
+var sites_tigergrades_domain = environment == 'production' ? 'az.tigergrades.com' : '${environment}.az.tigergrades.com'
 var components_tigergrades_name = 'tigergrades-${environment}'
 var namespaces_tiger_grades_bus_name = 'tiger-grades-bus-${environment}'
 var serverfarms_ASP_tigergradesgroup_98ad_name = 'ASP-tigergradesgroup-98ad-${environment}'
-var storageAccounts_tigergradesgroup_name = 'tigergrades${environment}'
+var storageAccounts_tigergradesgroup_name = environment == 'production' ? 'tigergrades' : 'tigergrades${environment}'
 var schedulers_tiger_grades_scheduler_name = 'tiger-grades-scheduler-${environment}'
 var actionGroups_Application_Insights_Smart_Detection_name = 'Application Insights Smart Detection ${environment}'
 var userAssignedIdentities_tigergrades_id_8bcc_name = 'tigergrades-id-8bcc-${environment}'
+var github_branch = environment == 'production' ? 'main' : environment
+var app_package_container = environment == 'production' ? 'app-package-tigergrades-0299027' : 'app-package-tigergrades-${environment}-0299027'
 
 resource workspace_resource 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: workspace_name
@@ -474,7 +476,7 @@ resource userAssignedIdentities_tigergrades_id_8bcc_name_spenpo_freelance_tiger_
   name: 'spenpo-freelance-tiger-functions-a318'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    subject: 'repo:spenpo-freelance/tiger-functions:ref:refs/heads/${environment}'
+    subject: 'repo:spenpo-freelance/tiger-functions:ref:refs/heads/${github_branch}'
     audiences: [
       'api://AzureADTokenExchange'
     ]
@@ -664,7 +666,7 @@ resource sites_tigergrades_name_hostNameBinding 'Microsoft.Web/sites/hostNameBin
 
 resource storageAccounts_tigergradesgroup_name_default_app_package_tigergrades_0299027 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
   parent: storageAccounts_tigergradesgroup_name_default
-  name: 'app-package-tigergrades-${environment}-0299027'
+  name: app_package_container
   properties: {
     immutableStorageWithVersioning: {
       enabled: false
@@ -800,7 +802,7 @@ resource sites_tigergrades_name_resource 'Microsoft.Web/sites@2024-04-01' = {
       deployment: {
         storage: {
           type: 'blobcontainer'
-          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.${az.environment().suffixes.storage}/app-package-tigergrades-${environment}-0299027'
+          value: 'https://${storageAccounts_tigergradesgroup_name}.blob.${az.environment().suffixes.storage}/${app_package_container}'
           authentication: {
             type: 'storageaccountconnectionstring'
             storageAccountConnectionStringName: 'AzureWebJobsStorage'

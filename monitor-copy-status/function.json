@@ -5,10 +5,7 @@
             "type": "serviceBusTrigger",
             "direction": "in",
             "queueName": "monitor-copy-status",
-            "fullyQualifiedNamespace": "https://tiger-grades-bus.servicebus.windows.net/monitor-copy-status",
-            "identity": {
-                "type": "SystemAssigned"
-            }
+            "connection": "ServiceBusConnection"
         }
     ]
 } 
