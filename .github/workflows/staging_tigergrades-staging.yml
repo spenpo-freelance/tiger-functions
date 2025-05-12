@@ -1,12 +1,12 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js project to Azure Function App - tigergrades
+name: Build and deploy Node.js project to Azure Function App - tigergrades-staging
 
 on:
   push:
     branches:
-      - main
+      - staging
   workflow_dispatch:
 
 env:
@@ -65,15 +65,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_64B6D8ADB73044D2AB318D3D8942334A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3019ECB4708E4089B6447418A476EA08 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EA41CB45EAAA487E830193E04C2C249A }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FD65D5A1324941ECB02F24D4606D5B0A }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C0AA3B07D43140F1ACA2BD437661E8A3 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2E8B1F5203FF462EBEFAAA3536B93C5E }}
 
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: 'tigergrades'
+          app-name: 'tigergrades-staging'
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           

@@ -11,5 +11,9 @@
     },
     "devDependencies": {
         "azure-functions-core-tools": "^4.0.5455"
+    },
+    "scripts": {
+        "deploy-dry": "bash infra/deploy.sh -e",
+        "deploy": "bash infra/deploy-configured.sh -e"
     }
 }
