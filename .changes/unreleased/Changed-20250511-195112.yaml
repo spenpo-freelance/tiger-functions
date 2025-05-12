@@ -1,3 +1,0 @@
-kind: Changed
-body: removed bicepparam file and made main.bicep flexible to support production environment
-time: 2025-05-11T19:51:12.237476+08:00
